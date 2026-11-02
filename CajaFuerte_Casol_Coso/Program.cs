@@ -12,7 +12,7 @@ namespace CajaFuerte_Casol_Coso
     internal class Program
     {
         Aes instanciaAes = Aes.Create();
-        HMACSHA256 instanciaHmac = HMACSHA256.Create();
+        HMACSHA256 instanciaHmac = new HMACSHA256();
 
         static void Main(string[] args)
         {
