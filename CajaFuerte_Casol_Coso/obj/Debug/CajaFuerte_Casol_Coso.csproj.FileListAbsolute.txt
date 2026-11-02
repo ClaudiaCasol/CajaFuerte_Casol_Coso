@@ -1,0 +1,7 @@
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\CajaFuerte_Casol_Coso.exe.config
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\CajaFuerte_Casol_Coso.exe
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\CajaFuerte_Casol_Coso.pdb
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\CajaFuerte_Casol_Coso.csproj.AssemblyReference.cache
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\CajaFuerte_Casol_Coso.csproj.CoreCompileInputs.cache
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\CajaFuerte_Casol_Coso.exe
+C:\Users\jcosopa\Documents\GitHub\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\CajaFuerte_Casol_Coso.pdb

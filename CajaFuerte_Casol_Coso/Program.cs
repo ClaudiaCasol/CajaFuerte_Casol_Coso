@@ -5,12 +5,14 @@ using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace CajaFuerte_Casol_Coso
 {
     internal class Program
     {
-
+        Aes instanciaAes = Aes.Create();
+        HMACSHA256 instanciaHmac = HMACSHA256.Create();
 
         static void Main(string[] args)
         {
@@ -90,6 +92,7 @@ namespace CajaFuerte_Casol_Coso
         {
             if (!File.Exists(fichero_entrada)) { Console.WriteLine($"Fichero de texto {fichero_entrada} no existe"); return; }
             if (File.Exists(fichero_salida)) File.Delete(fichero_salida);
+
         }
         static void descifrar(String fichero_salida, String fichero_recuperado, String contrasena)
         {
