@@ -11,11 +11,30 @@ namespace CajaFuerte_Casol_Coso
 {
     internal class Program
     {
-        Aes instanciaAes = Aes.Create();
-        HMACSHA256 instanciaHmac = new HMACSHA256();
+        static Byte[] key = { 4, 2, 5, 16, 7, 2 };
+        static Aes instanciaAes = Aes.Create();
+        static HMACSHA256 instanciaHmac = new HMACSHA256(key);
 
         static void Main(string[] args)
         {
+            byte[] secretkey = new Byte[64];
+
+            string fichero_entrada = "firma.txt";
+            string fichero_salida = "firmado.caja";
+
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                // The array is now filled with cryptographically strong random bytes.
+                rng.GetBytes(secretkey);
+
+                // Use the secret key to sign the message file.
+                FirmarConAutenticador(secretkey, fichero_entrada, fichero_salida);
+
+                Console.ReadLine();
+
+                VerificarFirma(secretkey, fichero_salida);
+            }
+
             bool salir = false;
             while (!salir)
             {
@@ -98,6 +117,89 @@ namespace CajaFuerte_Casol_Coso
         {
             if (!File.Exists(fichero_salida)) { Console.WriteLine($"Fichero encriptado {fichero_salida} no existe"); return; }
             if (File.Exists(fichero_recuperado)) File.Delete(fichero_recuperado);
+        }
+
+        static void FirmarConAutenticador(byte[] key, String fichero_entrada, String fichero_salida)
+        {
+            HMACSHA256 instanciaHmac = new HMACSHA256(key);
+
+            FileStream streamEntrada = new FileStream(fichero_entrada, FileMode.Open);
+            FileStream streamSalida = new FileStream(fichero_salida, FileMode.Create);
+
+            byte[] hashValue = instanciaHmac.ComputeHash(streamEntrada);
+
+            streamEntrada.Position = 0;
+
+            int bytesRead;
+
+            byte[] buffer = new byte[1024];
+            do
+            {
+                bytesRead = streamEntrada.Read(buffer, 0, 1024);
+                streamSalida.Write(buffer, 0, bytesRead);
+            } while (bytesRead > 0);
+
+            streamSalida.Write(hashValue, 0, hashValue.Length);
+
+            streamSalida.Close();
+            streamEntrada.Close();
+
+            return;
+        }
+
+        static bool VerificarFirma(byte[] key, String fichero_salida)
+        {
+            bool err = false;
+
+            HMACSHA256 hmac = new HMACSHA256(key);
+
+            byte[] storedHash = new byte[hmac.HashSize / 8];
+
+            FileStream inStream = new FileStream(fichero_salida, FileMode.Open);
+
+
+            Console.WriteLine("Before Read");
+            Console.ReadLine();
+            try
+            {
+                foreach (byte b in storedHash) { Console.WriteLine(b); }
+               
+                inStream.Position = inStream.Length - storedHash.Length;
+
+
+                foreach (byte b in storedHash) { Console.WriteLine(b); }
+            }
+            catch (Exception e) { Console.WriteLine(e); Console.ReadLine(); }
+            Console.WriteLine("After Read");
+            Console.ReadLine();
+
+            // Hay que desacerse de la parte final antes de computar
+            inStream.Position = 0;
+
+            inStream.SetLength(inStream.Length - storedHash.Length);
+
+            byte[] computedHash = hmac.ComputeHash(inStream);
+
+
+            for (int i = 0; i < storedHash.Length; i++)
+            {
+                if (computedHash[i] != storedHash[i])
+                {
+                    err = true;
+                }
+            }
+            inStream.Close();
+
+            if (err)
+            {
+                Console.WriteLine("Diferente");
+                return false;
+            }
+            else
+            {
+                Console.WriteLine("Igual");
+                return true;
+            }
         }
     }
 }
