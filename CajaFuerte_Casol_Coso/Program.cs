@@ -155,34 +155,106 @@ namespace CajaFuerte_Casol_Coso
 
             byte[] storedHash = new byte[hmac.HashSize / 8];
 
+            Console.Write(storedHash.Length);
+
             FileStream inStream = new FileStream(fichero_salida, FileMode.Open);
 
 
             Console.WriteLine("Before Read");
             Console.ReadLine();
-            try
+
+
+            inStream.Position = inStream.Length - storedHash.Length;
+
+            int numBytesToRead0 = storedHash.Length;
+            int numBytesRead0 = 0;
+            while (numBytesToRead0 > 0)
             {
-                foreach (byte b in storedHash) { Console.WriteLine(b); }
-               
-                inStream.Position = inStream.Length - storedHash.Length;
+                // Read may return anything from 0 to numBytesToRead.
+                int n = inStream.Read(storedHash, numBytesRead0, numBytesToRead0);
 
+                // Break when the end of the file is reached.
+                if (n == 0)
+                    break;
 
-                foreach (byte b in storedHash) { Console.WriteLine(b); }
+                numBytesRead0 += n;
+                numBytesToRead0 -= n;
             }
-            catch (Exception e) { Console.WriteLine(e); Console.ReadLine(); }
+
+            inStream.Position = inStream.Length - storedHash.Length;
+
+            byte[] leer = new byte[inStream.Length];
+            int numBytesToRead = (int)inStream.Length;
+            int numBytesRead = 0;
+            while (numBytesToRead > 0)
+            {
+                // Read may return anything from 0 to numBytesToRead.
+                int n = inStream.Read(leer, numBytesRead, numBytesToRead);
+
+                // Break when the end of the file is reached.
+                if (n == 0)
+                    break;
+
+                numBytesRead += n;
+                numBytesToRead -= n;
+            }
+
+            foreach (byte b in leer)
+            {
+                Console.Write(Encoding.UTF8.GetString(b));
+            }
+
             Console.WriteLine("After Read");
             Console.ReadLine();
 
             // Hay que desacerse de la parte final antes de computar
-            inStream.Position = 0;
+            inStream.Position = inStream.Length - storedHash.Length;
 
-            inStream.SetLength(inStream.Length - storedHash.Length);
+            byte[] leer2 = new byte[inStream.Length];
+            int numBytesToRead2 = (int)inStream.Length;
+            int numBytesRead2 = 0;
+            while (numBytesToRead2 > 0)
+            {
+                // Read may return anything from 0 to numBytesToRead.
+                int n = inStream.Read(leer2, numBytesRead2, numBytesToRead2);
+
+                // Break when the end of the file is reached.
+                if (n == 0)
+                    break;
+
+                numBytesRead2 += n;
+                numBytesToRead2 -= n;
+            }
+
+            foreach (byte b in leer2)
+            {
+                Console.Write(b);
+            }
+
+            Console.WriteLine("After Shortening");
+            Console.ReadLine();
+
+            inStream.Position = inStream.Length - storedHash.Length;
 
             byte[] computedHash = hmac.ComputeHash(inStream);
 
+            Console.WriteLine("C: ");
+            foreach (byte b in computedHash)
+            {
+                Console.Write(Encoding.UTF8.GetString(b));
+            }
+
+            Console.WriteLine("S: ");
+
+            foreach (byte b in storedHash)
+            {
+                Console.Write(Encoding.UTF8.GetString(b));
+            }
 
             for (int i = 0; i < storedHash.Length; i++)
             {
+
+
                 if (computedHash[i] != storedHash[i])
                 {
                     err = true;
