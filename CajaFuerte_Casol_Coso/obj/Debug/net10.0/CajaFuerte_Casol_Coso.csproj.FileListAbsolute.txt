@@ -1,0 +1,15 @@
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\net10.0\CajaFuerte_Casol_Coso.exe
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\net10.0\CajaFuerte_Casol_Coso.deps.json
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\net10.0\CajaFuerte_Casol_Coso.runtimeconfig.json
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\net10.0\CajaFuerte_Casol_Coso.dll
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\bin\Debug\net10.0\CajaFuerte_Casol_Coso.pdb
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.AssemblyInfoInputs.cache
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.AssemblyInfo.cs
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.csproj.CoreCompileInputs.cache
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.sourcelink.json
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.dll
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\refint\CajaFuerte_Casol_Coso.dll
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.pdb
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\CajaFuerte_Casol_Coso.genruntimeconfig.cache
+C:\Users\FakeF5\Documents\Ciberseguridad\CajaFuerte_Casol_Coso\CajaFuerte_Casol_Coso\obj\Debug\net10.0\ref\CajaFuerte_Casol_Coso.dll

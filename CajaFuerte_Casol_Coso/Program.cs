@@ -1,32 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.ConstrainedExecution;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Security.Cryptography;
-using System.Security.Permissions;
+﻿using System.Security.Cryptography;
+
 
 namespace CajaFuerte_Casol_Coso
 {
     internal class Program
     {
+        // Orden de identificadores en archivo cifrado
+        // 1. Sal
+        // 2. Nonce
+        // 3. GCM Tag
+        // 4. Texto cifrado.
+
+        private const int IteracionesPbkdf2 = 600000;
+
+        // Numero de bytes
+
+        private const int TamanoTag = 12;
+        private const int TamanoNonce = 12;
+        private const int TamanoSal = 16;
+        private const int TamanoClave = 32;
+
+        private const int InfoDesencriptar = TamanoSal + TamanoNonce + TamanoTag;
+        //
+
+        private static readonly HashAlgorithmName AlgoritmoPbkdf2 = HashAlgorithmName.SHA256;
+
         static void Main(string[] args)
         {
-            byte[] secretkey = new Byte[64];
-
-            string fichero_entrada = "firma.txt";
-            string fichero_salida = "firmado.caja";
-
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-            {
-                // The array is now filled with cryptographically strong random bytes.
-                rng.GetBytes(secretkey);
-
-                // Use the secret key to sign the message file.
-            }
-
             bool salir = false;
             while (!salir)
             {
@@ -41,12 +41,10 @@ namespace CajaFuerte_Casol_Coso
                         OpcionMenuCrearFichero();
                         break;
                     case "2":
-                        FirmarConAutenticador(secretkey, fichero_entrada, fichero_salida);
-                        // OpcionMenuCifrar();
+                        OpcionMenuCifrar();
                         break;
                     case "3":
-                        VerificarFirma(secretkey, fichero_salida);
-                        //OpcionMenuDescifrar();
+                        OpcionMenuDescifrar();
                         break;
                     case "4":
                         salir = true;
@@ -58,11 +56,27 @@ namespace CajaFuerte_Casol_Coso
             }
         }
 
-        static void OpcionMenuCrearFichero()
+        // Verificar que no sea nulo o vacio.
+        private static bool ValidarEntrada(String? texto)
+        {
+            if (String.IsNullOrEmpty(texto))
+            {
+                Console.WriteLine("Texto no valido");
+                return false;
+            }
+
+            return true;
+        }
+
+        // Para saber donde se guardan los archivos.
+        private static void OpcionMenuCrearFichero()
         {
             Console.WriteLine("Nombre fichero a crear: ");
 
-            String fichero_entrada = Console.ReadLine();
+            String? texto = Console.ReadLine();
+            if (!ValidarEntrada(texto)) return;
+
+            String fichero_entrada = texto!;
 
             fichero_entrada += ".txt";
 
@@ -73,35 +87,53 @@ namespace CajaFuerte_Casol_Coso
             Console.WriteLine($"\nArchivo creado en {ruta}");
         }
 
-        static void OpcionMenuCifrar()
+        private static void OpcionMenuCifrar()
         {
             Console.WriteLine("Nombre fichero a cifrar: ");
 
-            String fichero_entrada = Console.ReadLine();
+            String? texto = Console.ReadLine();
+            if (!ValidarEntrada(texto)) return;
+
+
+            String fichero_entrada = texto!;
+
             String fichero_salida = fichero_entrada + ".caja";
 
+            // Añadimos el .txt despues asi no tenemos que sobre complicar por culpa del .caja.
             fichero_entrada += ".txt";
 
             Console.WriteLine("Contraseña: ");
-            String contrasena = Console.ReadLine();
+
+            texto = Console.ReadLine();
+            if (!ValidarEntrada(texto)) return;
+
+            String contrasena = texto!;
+
             Cifrar(fichero_entrada, fichero_salida, contrasena);
         }
 
-        static void OpcionMenuDescifrar()
+        private static void OpcionMenuDescifrar()
         {
             Console.WriteLine("Nombre fichero a descifrar: ");
 
-            String fichero_salida = Console.ReadLine();
+            String? texto = Console.ReadLine();
+            if (!ValidarEntrada(texto)) return;
+
+            String fichero_salida = texto!;
             String fichero_recuperado = fichero_salida + ".txt";
 
             fichero_salida += ".caja";
 
             Console.WriteLine("Contraseña: ");
-            String contrasena = Console.ReadLine();
+
+            texto = Console.ReadLine();
+            if (!ValidarEntrada(texto)) return;
+
+            String contrasena = texto!;
             Descifrar(fichero_salida, fichero_recuperado, contrasena);
         }
 
-        static void Cifrar(String fichero_entrada, String fichero_salida, String contrasena)
+        private static void Cifrar(String fichero_entrada, String fichero_salida, String contrasena)
         {
             if (!File.Exists(fichero_entrada))
             {
@@ -109,172 +141,198 @@ namespace CajaFuerte_Casol_Coso
                 return;
             }
 
+            // Si existia lo borramos para crear uno nuevo.
             if (File.Exists(fichero_salida)) File.Delete(fichero_salida);
 
-            using (var aes = Aes.Create())
-            {
-                FileStream inStream = new FileStream(fichero_entrada, FileMode.Open, FileAccess.Read);
+            byte[] fileRead;
 
+            // Abrimos un FileStream para leer el archivo indicado.
+            using (FileStream streamEntrada = new FileStream(fichero_entrada, FileMode.Open, FileAccess.Read))
+            {
                 // Preparamos un array para guardar los bytes del archivo.
-                byte[] fileRead = new byte[inStream.Length];
+                fileRead = new byte[streamEntrada.Length];
 
                 // Leemos el archivo y lo ponemos en el array
                 int bytesLeidos = 0;
                 int bytesPorLeer = fileRead.Length;
                 do
                 {
-                    int leido = inStream.Read(fileRead, bytesLeidos, bytesPorLeer);
+                    // Devuelve cuantos bytes ha leido
+                    int leido = streamEntrada.Read(fileRead, bytesLeidos, bytesPorLeer);
 
                     bytesLeidos += leido;
                     bytesPorLeer -= leido;
+
+                    // Si no lo ha leido completo volvemos otra ronda.
                 } while (bytesPorLeer > 0);
-
-                inStream.Close();
-
-                byte[] encryptedFile = new byte[fileRead.Length];
-                byte[] iV = GenerarIV();
-
-                encryptedFile = aes.EncryptCbc(fileRead, iV);
-
-                FileStream outStream = new FileStream(fichero_salida, FileMode.Create, FileAccess.Write);
-
-                outStream.Write(sal, 0, sal.Length);
-
-                outStream.Write(iV, 0, iV.Length);
-
-                outStream.Write(encryptedFile, 0, encryptedFile.Length);
-
-                outStream.Close();
             }
+
+            // Pack de variables de identificacion a guardar.
+
+            byte[] sal = GenerarSal();
+            byte[] nonce = GenerarNonce();
+            // Perparamos la variable para poner el tag.
+            byte[] tag = new byte[TamanoTag];
+            //
+
+            // Preparamos variable para guardar el archivo cifrado.
+            byte[] encryptedFile = new byte[fileRead.Length];
+
+            byte[] clave = DerivarClaveDeContraseña(contrasena, sal);
+
+            using (var aes = new AesGcm(clave, TamanoTag))
+            {
+                // Nos da el archivo ecriptado y el tag que ha generado.
+                aes.Encrypt(nonce: nonce, plaintext: fileRead, ciphertext: encryptedFile, tag: tag);
+            }
+
+            // Abrimos un FileStream para crear y escribir el archivo indicado.
+            using (FileStream streamSalida = new FileStream(fichero_salida, FileMode.Create, FileAccess.Write))
+            {
+                // Escribimos los identificadores y luego el texto cifrado en el archivo indicado.
+                streamSalida.Write(sal, 0, sal.Length);
+
+                streamSalida.Write(nonce, 0, nonce.Length);
+
+                streamSalida.Write(tag, 0, tag.Length);
+
+                streamSalida.Write(encryptedFile, 0, encryptedFile.Length);
+                //
+            }
+            
+            Console.WriteLine("\n Archivo cifrado");
         }
 
-        static void Descifrar(String fichero_salida, String fichero_recuperado, String contrasena)
+        private static void Descifrar(String fichero_salida, String fichero_recuperado, String contrasena)
         {
             if (!File.Exists(fichero_salida))
             {
-                Console.WriteLine($"Fichero encriptado {fichero_salida} no existe");
+                Console.WriteLine($"Fichero cifrado {fichero_salida} no existe");
                 return;
             }
 
             if (File.Exists(fichero_recuperado)) File.Delete(fichero_recuperado);
+
+            byte[] fileRead;
+
+            using (FileStream streamEntrada = new FileStream(fichero_salida, FileMode.Open, FileAccess.Read))
+            {
+                fileRead = new byte[streamEntrada.Length];
+
+                int bytesLeidos = 0;
+                int bytesPorLeer = fileRead.Length;
+                do
+                {
+                    int leido = streamEntrada.Read(fileRead, bytesLeidos, bytesPorLeer);
+
+                    bytesLeidos += leido;
+                    bytesPorLeer -= leido;
+                } while (bytesPorLeer > 0);
+            }
+
+            // Preparamos pack de variables para leer los identificadores,
+            byte[] sal = new byte[TamanoSal];
+            byte[] nonce = new byte[TamanoNonce];
+            byte[] tag = new byte[TamanoTag];
+            //
+
+            // Si el archivo es mas pequeño que el pack de identificadores significa que no se puede verificar.
+            if (fileRead.Length < InfoDesencriptar)
+            {
+                ArchivoComprometido();
+                return;
+            }
+
+            // Leemos los identificadores.
+            for (int i = 0, salIndex = 0, nonceIndex = 0, tagIndex = 0; i < InfoDesencriptar; i++)
+            {
+                // Sal
+                if (i < TamanoSal)
+                {
+                    sal[salIndex] = fileRead[i];
+                    salIndex++;
+                }
+
+                // Nonce
+                if (i >= TamanoSal && i < TamanoNonce + TamanoSal)
+                {
+                    nonce[nonceIndex] = fileRead[i];
+                    nonceIndex++;
+                }
+
+                // Tag
+                if (i >= TamanoTag + TamanoSal && i < TamanoTag + TamanoNonce + TamanoSal)
+                {
+                    tag[tagIndex] = fileRead[i];
+                    tagIndex++;
+                }
+            }
+
+            byte[] clave = DerivarClaveDeContraseña(contrasena, sal);
+
+            // Necesitamos el archivo sin los identificadores para computar el Tag.
+            byte[] fileWithNoTags = new byte[fileRead.Length - InfoDesencriptar];
+            // Preparamos variable para guardar el archivo final.
+            byte[] decryptedFile = new byte[fileWithNoTags.Length];
+
+            // Leemos el texto cifrado saltandonos los identificadores.
+            for (int i = InfoDesencriptar, j = 0; i < fileRead.Length; i++, j++)
+            {
+                fileWithNoTags[j] = fileRead[i];
+            }
+
+            using (var aes = new AesGcm(clave, TamanoTag))
+            {
+                // Si tira un error significa que o no ha podido o ha sido modificado.
+                try
+                {
+                    // Nos da el archivo descifrado.
+                    aes.Decrypt(nonce: nonce, ciphertext: fileWithNoTags, tag: tag, plaintext: decryptedFile);
+                }
+                catch (Exception)
+                {
+                    ArchivoComprometido();
+                    return;
+                }
+            }
+
+            
+            using (FileStream streamSalida = new FileStream(fichero_recuperado, FileMode.Create, FileAccess.Write))
+            {
+                // Escribimos el texto descifrado en el archivo indicado.
+                streamSalida.Write(decryptedFile, 0, decryptedFile.Length);
+            }
+            
+            Console.WriteLine("\n Archivo descifrado");
         }
 
-        static byte[] GenerarIV()
+        // Generamos el Nonce usando el tamaño indicado.
+        private static byte[] GenerarNonce()
         {
-            byte[] IV = new byte[16];
-            RandomNumberGenerator.Create().GetBytes(IV);
-            return IV;
+            byte[] nonce = new byte[TamanoNonce];
+            RandomNumberGenerator.Create().GetBytes(nonce);
+            return nonce;
         }
 
-        static byte[] GenerarSal()
+        // Generamos la Sal usando el tamaño indicado.
+        private static byte[] GenerarSal()
         {
-            byte[] sal = new byte[16];
+            byte[] sal = new byte[TamanoSal];
             RandomNumberGenerator.Create().GetBytes(sal);
             return sal;
         }
 
-// TODO
-        static void DerivarClaveDeContraseña(String contrasena, byte[] sal)
+        // Generamos la Clave usando el tamaño, algoritmo y iteraciones indicadas.
+        private static byte[] DerivarClaveDeContraseña(String contrasena, byte[] sal)
         {
-            Rfc2898DeriveBytes a = new Rfc2898DeriveBytes(contrasena, sal, 600000, HashAlgorithmName.SHA256);
+            return Rfc2898DeriveBytes.Pbkdf2(contrasena, sal, IteracionesPbkdf2, AlgoritmoPbkdf2, TamanoClave);
         }
 
-        static void FirmarConAutenticador(byte[] key, String fichero_entrada, String fichero_salida)
+        // Si occurre un error durante verificacion lo decimos.
+        private static void ArchivoComprometido()
         {
-            HMACSHA256 instanciaHmac = new HMACSHA256(key);
-
-            FileStream streamEntrada = new FileStream(fichero_entrada, FileMode.Open, FileAccess.Read);
-            FileStream streamSalida = new FileStream(fichero_salida, FileMode.Create, FileAccess.Write);
-
-            byte[] hashValue = instanciaHmac.ComputeHash(streamEntrada);
-
-            streamEntrada.Position = 0;
-
-            int bytesRead;
-
-            byte[] buffer = new byte[1024];
-            do
-            {
-                bytesRead = streamEntrada.Read(buffer, 0, buffer.Length);
-                streamSalida.Write(buffer, 0, bytesRead);
-            } while (bytesRead > 0);
-
-            streamSalida.Write(hashValue, 0, hashValue.Length);
-
-            streamSalida.Close();
-            streamEntrada.Close();
-        }
-
-        static bool VerificarFirma(byte[] key, String fichero_salida)
-        {
-            bool err = false;
-
-            HMACSHA256 hmac = new HMACSHA256(key);
-
-            FileStream inStream = new FileStream(fichero_salida, FileMode.Open, FileAccess.Read);
-
-            // HashSize devuelve bits por lo que hay que dividirlo a numero de bytes
-            byte[] storedHash = new byte[hmac.HashSize / 8];
-            // Preparamos un array para guardar los bytes del archivo.
-            byte[] fileRead = new byte[inStream.Length];
-
-            // Leemos el archivo y lo ponemos en el array
-            int bytesLeidos = 0;
-            int bytesPorLeer = fileRead.Length;
-            do
-            {
-                int leido = inStream.Read(fileRead, bytesLeidos, bytesPorLeer);
-
-                bytesLeidos += leido;
-                bytesPorLeer -= leido;
-            } while (bytesPorLeer > 0);
-
-            inStream.Close();
-
-            if (fileRead.Length < storedHash.Length)
-            {
-                err = true;
-            }
-
-            if (!err)
-            {
-                // Leemos empezando por donde deberia empezar el hash que esta al final.
-                for (int i = fileRead.Length - storedHash.Length, j = 0; j < storedHash.Length; i++, j++)
-                {
-                    // Empezamos a escribir desde 0 en el array del hash
-                    storedHash[j] = fileRead[i];
-                }
-
-                // Tenemos que generar el hash con el contenido actual pero sin el hash. 
-                byte[] fileWithNoHash = new byte[fileRead.Length - storedHash.Length];
-
-                // Leemos lo que quepa, deberia excluir solo el hash.
-                for (int i = 0; i < fileWithNoHash.Length; i++)
-                {
-                    fileWithNoHash[i] = fileRead[i];
-                }
-
-                byte[] computedHash = hmac.ComputeHash(fileWithNoHash);
-
-                // Comprobamos byte a byte que sean iguales
-                for (int i = 0; i < storedHash.Length; i++)
-                {
-                    Console.WriteLine(computedHash[i] + ":C S:" + storedHash[i]);
-                    if (computedHash[i] != storedHash[i])
-                    {
-                        err = true;
-                    }
-                }
-            }
-
-            if (err)
-            {
-                Console.WriteLine("El archivo ha sido modificado!");
-                return false;
-            }
-
-            Console.WriteLine("El archivo mantiene su integridad");
-            return true;
+            Console.WriteLine("ESTE ARCHIVO NO SE HA VERIFICADO CORRECTAMENTE\n" +
+                              "ABORTANDO...");
         }
     }
 }
